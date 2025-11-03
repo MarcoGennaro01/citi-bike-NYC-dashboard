@@ -26,17 +26,20 @@ for filename in os.listdir(folder):
         ],
     )
 
-    # Convert timestamps to datetime, compute duration column and dropping started_at and ended_at
+    # Convert timestamps to datetime, compute duration column, dropping started_at and ended_at columns, dropping negative durations
     data["started_at"] = pd.to_datetime(data["started_at"])
     data["ended_at"] = pd.to_datetime(data["ended_at"])
 
     data["duration"] = data["ended_at"] - data["started_at"]
+    data["duration"] = [x.total_seconds() / 60 for x in data["duration"]]
 
     data["starting_date_hour"] = data["started_at"].apply(
         lambda x: x.replace(minute=0, second=0, microsecond=0)
     )
 
     data.drop(["started_at", "ended_at"], inplace=True, axis=1)
+
+    data = data.loc[data["duration"] > 0]
 
     # Replace station names with their IDs
     data["start_station_name"] = data["start_station_name"].replace(to_replace=stations)
