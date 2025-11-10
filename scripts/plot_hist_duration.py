@@ -18,3 +18,11 @@ plot_hist_duration = px.histogram(
     ),
     yaxis_title="Absolute frequency",
 )
+plot_hist_duration.write_html(
+    "../html/plot_hist_duration.html",
+    include_plotlyjs="cdn",
+    config={
+        "displayModeBar": True,  # Show modebar (zoom/pan tools)
+        "displaylogo": False,  # Hide Plotly logo
+    },
+)

@@ -2,21 +2,6 @@ import pandas as pd
 import plotly.express as px
 
 rides = pd.read_parquet("/home/mark/git/bike-data-newyork/data_parquet/rides.parq")
-# Computing average duration distribution
-rides = rides[rides["duration"] < 120]
-avg_duration = px.histogram(
-    rides,
-    x="duration",
-    color="is_m",
-    color_discrete_sequence=[
-        "hsv(197.18, 100%, 86.27%)",
-        "hsv(241.58, 77.55%, 19.22%)",
-    ],
-    histnorm="percent",
-    facet_row="is_electric",
-    nbins=30,
-)
-
 # Computing rides distribution through months and hours
 rides_reduced = rides.groupby("starting_date_hour").count().reset_index(drop=False)
 rides_reduced["month"] = rides_reduced["starting_date_hour"].apply(lambda x: x.month)

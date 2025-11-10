@@ -19,4 +19,4 @@ rides_map = px.scatter_map(
     zoom=10,
 )
 
-rides_map.write_html("../html/plot_stations_map.html")
+rides_map.write_html("../html/plot_stations_map.html", full_html=True)
