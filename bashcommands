@@ -1,0 +1,11 @@
+#downloading data
+for j in {01..12}; do 
+  wget https://s3.amazonaws.com/tripdata/2024$j-citibike-tripdata.zip./data
+done
+unzip "*.zip"
+mkdir ./csvs
+mv "*.csv" ./csvs 
+mkdir ./zips && mv *.zip ./zips
+
+#cleaning data
+sed -i 's/rideable_type/is_electric/; s/classic_bike/0/; s/electric_bike/1/; s/member_casual/is_m/; s/member/1/; s/casual/0/' *.csv

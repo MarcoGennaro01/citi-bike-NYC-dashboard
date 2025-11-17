@@ -1,7 +1,7 @@
-import dask.dataframe as dd  # Import Dask for distributed processing
+import dask.dataframe as dd
 
 stations = dd.read_csv(
-    "./data/csvs/*.csv",  # Read multiple CSV files with station data
+    "./data/csvs/*.csv",
     usecols=[
         "start_station_name",
         "end_station_name",
@@ -13,44 +13,35 @@ stations = dd.read_csv(
     low_memory=True,
 )
 
-station_names = dd.concat(
-    [
-        stations["start_station_name"],  # Combine start/end station names
-        stations["end_station_name"],
-    ],
-    axis=0,
+
+# Properly combine station data with aligned coordinates
+start_stations = stations[["start_station_name", "start_lat", "start_lng"]].rename(
+    columns={
+        "start_station_name": "station_name",
+        "start_lat": "station_lat",
+        "start_lng": "station_lng",
+    }
 )
-latitudes = dd.concat(
-    [stations["start_lat"], stations["end_lat"]], axis=0
-)  # Combine start/end latitudes
-longitudes = dd.concat(
-    [stations["start_lng"], stations["end_lng"]], axis=0
-)  # Combine start/end longitudes
 
-stacked_stations = dd.concat(
-    [station_names, latitudes, longitudes], axis=1
-)  # Merge all columns into one DataFrame
+end_stations = stations[["end_station_name", "end_lat", "end_lng"]].rename(
+    columns={
+        "end_station_name": "station_name",
+        "end_lat": "station_lat",
+        "end_lng": "station_lng",
+    }
+)
 
-stacked_stations.columns = [
-    "station_name",
-    "station_lat",
-    "station_lng",
-]  # Rename columns for clarity
+# Concatenate start and end stations
+stacked_stations = dd.concat([start_stations, end_stations], axis=0)
 
-stacked_stations = stacked_stations.dropna()  # Remove rows with missing values
+# Remove duplicates and clean data
+stacked_stations = stacked_stations.dropna()
+stacked_stations = stacked_stations.drop_duplicates(subset="station_name")
+stacked_stations = stacked_stations.sort_values("station_name")
+stacked_stations = stacked_stations.reset_index(drop=True)
+stacked_stations.index.name = "station_id"
 
-stacked_stations = stacked_stations.drop_duplicates()  # Remove duplicate stations
-
-stacked_stations = stacked_stations.sort_values(
-    "station_name"
-)  # Sort alphabetically by station name
-
-stacked_stations = stacked_stations.reset_index(
-    drop=True
-)  # Reset index to sequential numbers
-stacked_stations.index.name = "station_id"  # Name index as station_id
-
-stacked_stations = stacked_stations.compute()  # Execute all operations
+stacked_stations = stacked_stations.compute()
 stacked_stations = stacked_stations.reset_index(drop=True)
 
-stacked_stations.to_parquet("./cleaned_data/stations.parquet")  # Save to parquet format
+stacked_stations.to_parquet("./data_parquet/stations.parq")
