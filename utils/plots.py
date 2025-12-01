@@ -299,10 +299,31 @@ def time_series_rides(station_selected=None):
     # Merge to ensure all months are present, filling missing counts with 0
     merged_counts = pd.merge(all_months, ride_counts, on="month", how="left").fillna(0)
 
+    months = [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
+    ]
+
     time_series_chart = px.line(
         merged_counts,
         x="month",
         y="count",
         title=f"Monthly Rides for {station_selected}",
-    ).update_layout(font_family="JetBrains Mono", hovermode="x")
+        labels={"count": "Rides", "month": ""},
+        hover_data={"month": False, "count": True},
+    ).update_layout(
+        font_family="JetBrains Mono",
+        hovermode="x",
+        xaxis=dict(tickvals=list(range(1, 13)), ticktext=months),
+    )
     return time_series_chart
