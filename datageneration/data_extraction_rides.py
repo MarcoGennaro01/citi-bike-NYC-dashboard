@@ -63,7 +63,7 @@ for filename in os.listdir(folder):
     data.to_parquet(path)
 
 # Combine all parquet files and save as single file
-rides = dd.read_parquet("./data/parq/*.parq", index=False, engine="pyarrow")
+rides = dd.read_parquet("../data/parq/*.parq", index=False, engine="pyarrow")
 rides = rides.compute()
 rides = rides.reset_index(drop=True)
-rides.to_parquet("./data_parquet/rides.parq")
+rides.to_parquet("../data_parquet/rides.parq")
