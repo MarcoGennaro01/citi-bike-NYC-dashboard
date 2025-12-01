@@ -1,8 +1,3 @@
-import subprocess
-
-# Calling bash commands for extracting and first step of transformation
-subprocess.call("bashcommands")
-
 # Creating stations.parq
 import data_extraction_stations
 

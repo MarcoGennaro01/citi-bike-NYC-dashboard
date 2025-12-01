@@ -1,7 +1,7 @@
 import dask.dataframe as dd
 
 stations = dd.read_csv(
-    "../data/csvs/*.csv",
+    "./data/csvs/*.csv",
     usecols=[
         "start_station_name",
         "end_station_name",
@@ -44,4 +44,4 @@ stacked_stations.index.name = "station_id"
 stacked_stations = stacked_stations.compute()
 stacked_stations = stacked_stations.reset_index(drop=True)
 
-stacked_stations.to_parquet("../data_parquet/stations.parq")
+stacked_stations.to_parquet("./data_parquet/stations.parq")
