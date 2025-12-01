@@ -1,0 +1,7 @@
+bike-data-newyork.code-workspace
+colors palette.pdf
+/data/
+/data_parquet/
+/.venv/
+/.vscode/
+/__pycache__/

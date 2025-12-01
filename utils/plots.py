@@ -66,19 +66,30 @@ def stations_freq_table():
 
 
 @st.cache_data
-def duration_plot():
+def duration_plot(station_arg=None):
     """Histogram of ride duration distribution (under 60 minutes)."""
     rides = pd.read_parquet("./data_parquet/rides.parq")
-    rides = rides.loc[rides.duration < 60, "duration"]
-    rides, bins = np.histogram(rides, bins=21)
+    rides = rides.loc[rides.duration < 60, ["duration", "start_station_id"]]
+    plot_title = "Ride duration"
+    if station_arg:
+        stations = pd.read_parquet("./data_parquet/stations.parq")
+        rides = pd.merge(
+            rides,
+            stations,
+            left_on="start_station_id",
+            right_on=stations.index,
+        )
+        rides = rides[rides["station_name"] == station_arg]
+        plot_title = f"Ride Duration from {station_arg}"
 
+    counts, bins = np.histogram(rides["duration"], bins=21)
     plot_hist_duration = px.histogram(
         x=[
             f"{round(bins[i], 1)}-{round(bins[i + 1], 1)}" for i in range(len(bins) - 1)
         ],
-        y=rides,
+        y=counts,
         labels={"x": "Duration (min)", "y": "Count"},
-        title="Ride duration",
+        title=plot_title,
     ).update_layout(
         font_family="JetBrains Mono",
         xaxis_showticklabels=False,
@@ -266,48 +277,32 @@ def pies_plot():
     return (member_pie, electric_pie)
 
 
-st.set_page_config(layout="wide")
-st.markdown(
-    """<style>
-#MainMenu {visibility: hidden;} footer {visibility: hidden;} header {visibility: hidden;}
-header.stAppHeader {background-color: transparent;}
-section.stMain .block-container {padding-top: 0; z-index: 1;}
-</style>""",
-    unsafe_allow_html=True,
-)
+def get_unique_stations():
+    stations = pd.read_parquet("./data_parquet/stations.parq")["station_name"]
+    return stations
 
-top_left_column, top_right_column = st.columns([2, 1], border=True)
 
-with top_left_column:
-    tab1m, tab2m = st.tabs(["Map", "Table"])
-    with tab1m:
-        search_term = st.text_input("Station name", "")
-        st.plotly_chart(rides_map(search_term))
-    with tab2m:
-        stations_freq_table()
-with top_right_column:
-    weather_data = weather_plots()
-    idx = st.selectbox(
-        "Weather:",
-        (0, 1, 2),
-        format_func=lambda x: ["Precipitation", "Temperature", "Wind Speed"][x],
-    )
-    st.plotly_chart(weather_data[idx])
-down_left_column, down_right_column = st.columns([2, 1], border=True)
+@st.cache_data
+def time_series_rides(station_selected=None):
+    stations = pd.read_parquet("./data_parquet/stations.parq")
+    station_filtered = stations[stations["station_name"] == station_selected]
+    rides = pd.read_parquet("./data_parquet/rides.parq")
+    rides = rides[rides["start_station_id"].isin(station_filtered.index)]
+    rides["month"] = rides["starting_date_hour"].dt.month
 
-with down_left_column:
-    tab1, tab2, tab3 = st.tabs(["Duration", "Hourly", "Monthly"])
-    with tab1:
-        st.plotly_chart(duration_plot())
-    with tab2:
-        st.plotly_chart(freq_hour_plot())
-    with tab3:
-        st.plotly_chart(freq_month_plot())
+    # Count rides per month
+    ride_counts = rides.groupby("month").size().reset_index(name="count")
 
-with down_right_column:
-    pies = pies_plot()
-    tab1p, tab2p = st.tabs(["Member", "Electric"])
-    with tab1p:
-        st.plotly_chart(pies[0])
-    with tab2p:
-        st.plotly_chart(pies[1])
+    # Create a full range of months (1-12)
+    all_months = pd.DataFrame({"month": range(1, 13)})
+
+    # Merge to ensure all months are present, filling missing counts with 0
+    merged_counts = pd.merge(all_months, ride_counts, on="month", how="left").fillna(0)
+
+    time_series_chart = px.line(
+        merged_counts,
+        x="month",
+        y="count",
+        title=f"Monthly Rides for {station_selected}",
+    ).update_layout(font_family="JetBrains Mono", hovermode="x")
+    return time_series_chart
