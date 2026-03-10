@@ -1,47 +1,60 @@
+from pathlib import Path
+import pandas as pd
 import dask.dataframe as dd
 
-stations = dd.read_csv(
-    "./data/csvs/*.csv",
-    usecols=[
-        "start_station_name",
-        "end_station_name",
-        "start_lat",
-        "start_lng",
-        "end_lat",
-        "end_lng",
-    ],
-    low_memory=True,
-)
+
+RENAME_START = {
+    "start_station_name": "station_name",
+    "start_lat": "station_lat",
+    "start_lng": "station_lng",
+}
+RENAME_END = {
+    "end_station_name": "station_name",
+    "end_lat": "station_lat",
+    "end_lng": "station_lng",
+}
 
 
-# Properly combine station data with aligned coordinates
-start_stations = stations[["start_station_name", "start_lat", "start_lng"]].rename(
-    columns={
-        "start_station_name": "station_name",
-        "start_lat": "station_lat",
-        "start_lng": "station_lng",
-    }
-)
+def extract_stations(csv_pattern: str) -> pd.DataFrame:
+    """Read all CSVs, stack start/end stations, deduplicate, and return a clean DataFrame."""
+    raw = dd.read_csv(
+        csv_pattern,
+        usecols=[
+            "start_station_name",
+            "end_station_name",
+            "start_lat",
+            "start_lng",
+            "end_lat",
+            "end_lng",
+        ],
+        low_memory=True,
+    )
 
-end_stations = stations[["end_station_name", "end_lat", "end_lng"]].rename(
-    columns={
-        "end_station_name": "station_name",
-        "end_lat": "station_lat",
-        "end_lng": "station_lng",
-    }
-)
+    start = raw[list(RENAME_START)].rename(columns=RENAME_START)
+    end = raw[list(RENAME_END)].rename(columns=RENAME_END)
 
-# Concatenate start and end stations
-stacked_stations = dd.concat([start_stations, end_stations], axis=0)
+    stacked = dd.concat([start, end], axis=0).dropna()
 
-# Remove duplicates and clean data
-stacked_stations = stacked_stations.dropna()
-stacked_stations = stacked_stations.drop_duplicates(subset="station_name")
-stacked_stations = stacked_stations.sort_values("station_name")
-stacked_stations = stacked_stations.reset_index(drop=True)
-stacked_stations.index.name = "station_id"
+    result = (
+        stacked.drop_duplicates(subset="station_name")
+        .compute()
+        .sort_values("station_name")
+        .reset_index(drop=True)
+    )
+    result.index.name = "station_id"
+    return result
 
-stacked_stations = stacked_stations.compute()
-stacked_stations = stacked_stations.reset_index(drop=True)
 
-stacked_stations.to_parquet("./data_parquet/stations.parq")
+def main() -> None:
+    repo_root = Path(__file__).resolve().parent.parent
+    csv_pattern = str(repo_root / "data" / "csvs" / "*.csv")
+    out_path = repo_root / "data_parquet" / "stations.parq"
+
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+
+    stations = extract_stations(csv_pattern)
+    stations.to_parquet(out_path)
+
+
+if __name__ == "__main__":
+    main()

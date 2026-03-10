@@ -1,0 +1,5 @@
+data/
+data_parquet/
+datageneration/__pycache__/
+utils/__pycache__/
+.git
