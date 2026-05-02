@@ -1,42 +1,43 @@
-# 🚴 NYC Citi Bike Analytics Dashboard
+# NYC Citi Bike Analytics Dashboard
 
-**Interactive business intelligence platform for NYC Citi Bike operations in 2024**
+Interactive Streamlit dashboard for exploring NYC Citi Bike operations in 2024.
 
 ## TL;DR
 
-An interactive, multi-page Streamlit dashboard for analyzing NYC Citi Bike data. The main page provides a high-level operational overview with a searchable map, while a second page allows for detailed drill-down analysis of individual stations.
+This project provides a single-page analytics dashboard built with Streamlit and Plotly. It combines system-wide metrics with station-specific drill-downs, so you can move from a citywide overview to one selected station without leaving the main page.
 
-## 📊 Overview
+## Overview
 
-A real-time analytical dashboard providing stakeholders with actionable insights into NYC Citi Bike service performance. It enables data-driven decision-making for operations, capacity planning, and member engagement strategies.
+The dashboard is designed for operational analysis of Citi Bike activity across 2024. It supports quick exploration of ride volume, seasonality, weather sensitivity, station-level demand, and rider or bike-type composition using preprocessed Parquet datasets.
 
-## 🎯 Key Features
+## Key Features
 
-### 🏙️ General Dashboard
-- **Live Station Map**: Geographic heatmap of station traffic with a search function to quickly locate stations.
-- **Temporal Trends**: Analysis of hourly and monthly ride patterns to optimize scheduling.
-- **Weather Impact**: Correlation between temperature, precipitation, and ridership to forecast demand.
-- **User & Fleet Breakdown**: Insights into member vs. casual users and electric vs. classic bike usage.
+### Unified Dashboard
+- Station selector in the header for drilling into a single station without navigating to a separate page.
+- Split selector for comparing ride behavior by Membership, Electric, or Both across multiple charts.
+- Station map and frequency table for identifying the busiest origins.
+- Weather analysis for precipitation, temperature, and wind speed against ride counts.
+- Pie charts for member mix and electric-bike usage.
 
-### 🚉 Single Station Analysis
-- A dedicated page to analyze a single station's performance, including:
-  - Monthly ride trends over the year.
-  - A map of the most frequent inbound/outbound routes.
-  - Distribution of ride durations originating from that station.
+### Temporal Analysis
+- Monthly station time series shown directly in the header when a station is selected.
+- Ride duration histogram with stacked splits by membership, electric usage, or both.
+- Hourly and monthly ride charts with the same split logic reused across views.
 
-## ⚙️ Application Structure
+## Application Structure
 
-- **`datageneration/`**: Scripts to download, process, and transform raw CSV data into an optimized Parquet data lake (`data_extraction_*.py`).
-- **`data_parquet/`**: The analytical data store containing cleaned `rides`, `stations`, and `weather` data.
-- **`Home_Page.py`**: The main Streamlit dashboard page, providing a high-level overview.
-- **`pages/Single_Station_Analysis.py`**: The secondary page for detailed, station-specific analytics.
-- **`utils/plots.py`**: A utility module containing all data processing and Plotly visualization functions used by the app.
+- `datageneration/`: Scripts to download, clean, and transform the raw Citi Bike and weather data into Parquet files.
+- `data_parquet/`: Optimized analytical datasets for rides, stations, and weather.
+- `Home_Page.py`: The main Streamlit app, including both global and station-level analysis.
+- `utils/plots.py`: Shared data-loading, filtering, aggregation, and Plotly chart helpers.
 
-## 🛠️ Technical Stack
-- **Data Processing**: Pandas
-- **Analytics & Visualization**: Plotly, Streamlit
-- **Storage**: Parquet
+## Technical Stack
 
-## 📡 Data Source
-- NYC Citi Bike official trip history datasets (2024)
+- Data Processing: Pandas, NumPy
+- Analytics and Visualization: Plotly, Streamlit
+- Storage: Parquet
+
+## Data Sources
+
+- NYC Citi Bike official trip history datasets for 2024
 - Open-Meteo API for historical weather data
